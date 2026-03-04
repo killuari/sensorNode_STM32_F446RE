@@ -1,0 +1,8 @@
+# --- Build Artifacts ---
+build/
+
+# --- IDE specific ---
+.settings/
+.mxproject
+
+# --- OS specific ---
