@@ -18,6 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f446xx.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_conf.h"
+#include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_uart.h"
+#include <stdint.h>
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -70,7 +77,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint8_t buf[16];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -104,11 +111,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    strcpy((char*)buf, "Hello World!\r\n");
+
     if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET) {
       HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-      HAL_Delay(200);
+      HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 5000);
+      HAL_Delay(500);
       HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-      HAL_Delay(200);
     }
   }
   /* USER CODE END 3 */
