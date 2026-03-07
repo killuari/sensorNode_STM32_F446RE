@@ -51,33 +51,33 @@ void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
 }
 
 void BME280_ReadRaw(I2C_HandleTypeDef *hi2c, uint8_t *raw) {
-    // Burst Read von 0xF7 bis 0xFE
+    // Burst Read 0xF7 - 0xFE
     HAL_I2C_Mem_Read(hi2c, BME280_I2C_ADDR, 0xF7, 1, raw, 8, 100);
 }
 
 float BME280_CalculateTemperature(uint8_t *raw_data, BME280_Handle *dev) {
-    // 1. Rohwert aus den 3 Bytes zusammenbauen (20-bit)
+    // raw data of 3 Bytes (20-bit)
     // raw[3]=MSB, raw[4]=LSB, raw[5]=XLSB
     int32_t adc_T = (int32_t)((raw_data[3] << 12) | (raw_data[4] << 4) | (raw_data[5] >> 4));
 
-    // 2. Formel aus dem Datenblatt (Float-Variante)
+    // formula by datasheet
     float var1, var2, T;
     var1 = (((float)adc_T) / 16384.0f - ((float)dev->dig_T1) / 1024.0f) * ((float)dev->dig_T2);
     var2 = ((((float)adc_T) / 131072.0f - ((float)dev->dig_T1) / 8192.0f) *
             (((float)adc_T) / 131072.0f - ((float)dev->dig_T1) / 8192.0f)) * ((float)dev->dig_T3);
     
-    dev->t_fine = (int32_t)(var1 + var2); // WICHTIG für Druck und Feuchtigkeit!
+    dev->t_fine = (int32_t)(var1 + var2); // essential for pressure and humidity
     T = (var1 + var2) / 5120.0f;
     
     return T;
 }
 
 float BME280_CalculatePressure(uint8_t *raw_data, BME280_Handle *dev) {
-    // 1. Rohwert (20-bit)
+    // raw data
     // raw[0]=MSB, raw[1]=LSB, raw[2]=XLSB
     int32_t adc_P = (int32_t)((raw_data[0] << 12) | (raw_data[1] << 4) | (raw_data[2] >> 4));
 
-    // 2. Formel (nutzt dev->t_fine!)
+    // formula
     float var1, var2, p;
     var1 = ((float)dev->t_fine / 2.0f) - 64000.0f;
     var2 = var1 * var1 * ((float)dev->dig_P6) / 32768.0f;
@@ -86,7 +86,7 @@ float BME280_CalculatePressure(uint8_t *raw_data, BME280_Handle *dev) {
     var1 = (((float)dev->dig_P3 * var1 * var1 / 524288.0f) + ((float)dev->dig_P2 * var1)) / 524288.0f;
     var1 = (1.0f + var1 / 32768.0f) * ((float)dev->dig_P1);
 
-    if (var1 == 0.0f) return 0; // Vermeidung von Division durch Null
+    if (var1 == 0.0f) return 0; // do not divide by zero
 
     p = 1048576.0f - (float)adc_P;
     p = (p - (var2 / 4096.0f)) * 6250.0f / var1;
@@ -94,15 +94,15 @@ float BME280_CalculatePressure(uint8_t *raw_data, BME280_Handle *dev) {
     var2 = p * ((float)dev->dig_P8) / 32768.0f;
     p = p + (var1 + var2 + ((float)dev->dig_P7)) / 16.0f;
 
-    return p / 100.0f; // Ergebnis in hPa (Hektopascal)
+    return p / 100.0f; // result in hPa
 }
 
 float BME280_CalculateHumidity(uint8_t *raw_data, BME280_Handle *dev) {
-    // 1. Rohwert (16-bit)
+    // raw data
     // raw[6]=MSB, raw[7]=LSB
     int32_t adc_H = (int32_t)((raw_data[6] << 8) | raw_data[7]);
 
-    // 2. Formel (nutzt dev->t_fine!)
+    // formula
     float h = (((float)dev->t_fine) - 76800.0f);
     h = (adc_H - (((float)dev->dig_H4) * 64.0f + ((float)dev->dig_H5) / 16384.0f * h)) *
         (((float)dev->dig_H2) / 65536.0f * (1.0f + ((float)dev->dig_H6) / 67108864.0f * h *
@@ -112,5 +112,5 @@ float BME280_CalculateHumidity(uint8_t *raw_data, BME280_Handle *dev) {
     if (h > 100.0f) h = 100.0f;
     if (h < 0.0f) h = 0.0f;
 
-    return h; // Ergebnis in % relative Luftfeuchte
+    return h; // result in % relative humidity
 }
