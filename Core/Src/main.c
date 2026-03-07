@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "bme280_driver.h"
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_conf.h"
@@ -25,6 +26,7 @@
 #include "stm32f4xx_hal_uart.h"
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -77,7 +79,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  uint8_t buf[16];
+  uint8_t raw_data[8]; // buffer for Burst-Read
+  float temp, press, hum; // results of calculations
+  char uart_buf[100];     // buffer for uart
+  BME280_Handle bme280_handle;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -101,7 +106,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  BME280_Init(&hi2c1, &bme280_handle);
 
+  sprintf(uart_buf, "BME280 Driver gestartet!\r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -111,14 +119,23 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    strcpy((char*)buf, "Hello World!\r\n");
+    // read all 8 bytes in one go
+    BME280_ReadRawData(&hi2c1, raw_data);
 
-    if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET) {
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-      HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), 5000);
-      HAL_Delay(500);
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-    }
+    // calculation, temp must be first
+    // because only this function sets the t_fine for the other calculations
+    temp  = BME280_CalculateTemperature(raw_data, &bme280_handle);
+    press = BME280_CalculatePressure(raw_data, &bme280_handle);
+    hum   = BME280_CalculateHumidity(raw_data, &bme280_handle);
+
+    // format print
+    sprintf(uart_buf, "Temp: %.2f C | Pressure: %.2f hPa | Humidity: %.2f %%\r\n", 
+            temp, press, hum);
+
+    // send to pc per uart
+    HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }

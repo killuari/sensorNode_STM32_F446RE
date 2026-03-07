@@ -50,9 +50,9 @@ void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
     dev->dig_H6 = (int8_t)dat2[6];
 }
 
-void BME280_ReadRaw(I2C_HandleTypeDef *hi2c, uint8_t *raw) {
+HAL_StatusTypeDef BME280_ReadRawData(I2C_HandleTypeDef *hi2c, uint8_t *raw_data_array) {
     // Burst Read 0xF7 - 0xFE
-    HAL_I2C_Mem_Read(hi2c, BME280_I2C_ADDR, 0xF7, 1, raw, 8, 100);
+    return HAL_I2C_Mem_Read(hi2c, BME280_I2C_ADDR, 0xF7, 1, raw_data_array, 8, 100);
 }
 
 float BME280_CalculateTemperature(uint8_t *raw_data, BME280_Handle *dev) {

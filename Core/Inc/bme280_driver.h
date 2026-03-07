@@ -26,7 +26,7 @@ typedef struct {
 void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev);
 
 // burst read 0xF7 to 0xFE
-HAL_StatusTypeDef BME280_ReadRawData(uint8_t *raw_data_array);
+HAL_StatusTypeDef BME280_ReadRawData(I2C_HandleTypeDef *hi2c, uint8_t *raw_data_array);
 
 // convert raw data to readable data
 float BME280_CalculateTemperature(uint8_t *raw_data, BME280_Handle *dev);
