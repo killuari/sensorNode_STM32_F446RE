@@ -18,17 +18,19 @@ typedef struct {
     uint8_t  dig_H3;
     int16_t  dig_H4, dig_H5;
     int8_t   dig_H6;
-} BME280_CalibData;
+
+    int32_t  t_fine;
+} BME280_Handle;
 
 // initialize sensor (wake from sleep mode)
-void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_CalibData *calib);
+void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev);
 
 // burst read 0xF7 to 0xFE
 HAL_StatusTypeDef BME280_ReadRawData(uint8_t *raw_data_array);
 
 // convert raw data to readable data
-float BME280_CalculateTemperature(uint8_t *raw_data);
-float BME280_CalculatePressure(uint8_t *raw_data);
-float BME280_CalculateHumidity(uint8_t *raw_data);
+float BME280_CalculateTemperature(uint8_t *raw_data, BME280_Handle *dev);
+float BME280_CalculatePressure(uint8_t *raw_data, BME280_Handle *dev);
+float BME280_CalculateHumidity(uint8_t *raw_data, BME280_Handle *dev);
 
 #endif
