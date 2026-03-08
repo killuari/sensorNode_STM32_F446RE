@@ -22,6 +22,7 @@
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_conf.h"
+#include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_uart.h"
 #include <stdint.h>
@@ -83,6 +84,7 @@ int main(void)
   float temp, press, hum; // results of calculations
   char uart_buf[100];     // buffer for uart
   BME280_Handle bme280_handle;
+  uint8_t sensor_was_offline = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -106,10 +108,15 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  BME280_Init(&hi2c1, &bme280_handle);
+  HAL_StatusTypeDef sensor_status = BME280_Init(&hi2c1, &bme280_handle);
 
-  sprintf(uart_buf, "BME280 Driver gestartet!\r\n");
+  if (sensor_status == HAL_OK) {
+    sprintf(uart_buf, "Started BME280 Driver!\r\n");
+  } else {
+    sprintf(uart_buf, "Error: BME280 Sensor not found!\r\n");
+  }
   HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,21 +126,36 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
     // read all 8 bytes in one go
-    BME280_ReadRawData(&hi2c1, raw_data);
+    if (BME280_ReadRawData(&hi2c1, raw_data) == HAL_OK) {
+      if (sensor_was_offline == 1) {
+            BME280_Init(&hi2c1, &bme280_handle); 
+            sensor_was_offline = 0;
+            sprintf(uart_buf, "-> Sensor reconnected and initialized!\r\n");
+            HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+            
+            HAL_Delay(100); 
+            continue; // get new data
+        }
 
-    // calculation, temp must be first
-    // because only this function sets the t_fine for the other calculations
-    temp  = BME280_CalculateTemperature(raw_data, &bme280_handle);
-    press = BME280_CalculatePressure(raw_data, &bme280_handle);
-    hum   = BME280_CalculateHumidity(raw_data, &bme280_handle);
+      // calculation, temp must be first
+      // because only this function sets the t_fine for the other calculations
+      temp  = BME280_CalculateTemperature(raw_data, &bme280_handle);
+      press = BME280_CalculatePressure(raw_data, &bme280_handle);
+      hum   = BME280_CalculateHumidity(raw_data, &bme280_handle);
 
-    // format print
-    sprintf(uart_buf, "Temp: %.2f C | Pressure: %.2f hPa | Humidity: %.2f %%\r\n", 
-            temp, press, hum);
+      // format print
+      sprintf(uart_buf, "Temp: %.2f C | Pressure: %.2f hPa | Humidity: %.2f %%\r\n", 
+              temp, press, hum);
 
-    // send to pc per uart
-    HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+      // send to pc per uart
+      HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+    } else { // runtime error
+      sensor_was_offline = 1;
+      sprintf(uart_buf, "WARNING: Lost connection to the BME280 sensor!\r\n");
+      HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+    }
 
     HAL_Delay(1000);
   }

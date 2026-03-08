@@ -23,7 +23,7 @@ typedef struct {
 } BME280_Handle;
 
 // initialize sensor (wake from sleep mode)
-void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev);
+HAL_StatusTypeDef BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev);
 
 // burst read 0xF7 to 0xFE
 HAL_StatusTypeDef BME280_ReadRawData(I2C_HandleTypeDef *hi2c, uint8_t *raw_data_array);

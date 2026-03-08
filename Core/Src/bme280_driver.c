@@ -1,6 +1,15 @@
 #include "bme280_driver.h"
+#include "stm32f4xx_hal_def.h"
 
-void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
+HAL_StatusTypeDef BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
+    uint8_t chip_id = 0;
+    // error check
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(hi2c, BME280_I2C_ADDR, 0xD0, 1, &chip_id, 1, 100);
+    
+    if (status != HAL_OK || chip_id != 0x60) {
+        return HAL_ERROR; // sensor not found
+    }
+
     // configure humidity (0xF2) -> Oversampling x1
     uint8_t hum_reg = 0x01;
     HAL_I2C_Mem_Write(hi2c, BME280_I2C_ADDR, 0xF2, 1, &hum_reg, 1, 100);
@@ -48,6 +57,8 @@ void BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
     dev->dig_H5 = (int16_t)((dat2[5] << 4) | (dat2[4] >> 4));
     
     dev->dig_H6 = (int8_t)dat2[6];
+
+    return HAL_OK;
 }
 
 HAL_StatusTypeDef BME280_ReadRawData(I2C_HandleTypeDef *hi2c, uint8_t *raw_data_array) {
