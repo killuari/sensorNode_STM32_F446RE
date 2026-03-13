@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "bme280_driver.h"
 #include "stm32f446xx.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_conf.h"
@@ -26,12 +25,15 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_uart.h"
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bme280_driver.h"
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
 
+#include <string.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

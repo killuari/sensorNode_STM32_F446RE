@@ -3,6 +3,7 @@
 
 HAL_StatusTypeDef BME280_Init(I2C_HandleTypeDef *hi2c, BME280_Handle *dev) {
     uint8_t chip_id = 0;
+    
     // error check
     HAL_StatusTypeDef status = HAL_I2C_Mem_Read(hi2c, BME280_I2C_ADDR, 0xD0, 1, &chip_id, 1, 100);
     

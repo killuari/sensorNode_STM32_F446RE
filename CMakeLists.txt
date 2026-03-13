@@ -46,11 +46,15 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     Core/Src/bme280_driver.c
+
+    Drivers/stm32-ssd1306/Src/ssd1306.c
+    Drivers/stm32-ssd1306/Src/ssd1306_fonts.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    Drivers/stm32-ssd1306/Inc
 )
 
 # Add project symbols (macros)
