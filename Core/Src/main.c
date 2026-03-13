@@ -124,13 +124,26 @@ int main(void)
   // Initialize the OLED display.
   ssd1306_Init();
 
-  // Draw a startup screen
+  // Draw an (animated) startup screen
+  char startup_buf[16] = "Booting";
+
   ssd1306_Fill(Black);
   ssd1306_SetCursor(10, 20);
-  ssd1306_WriteString("Booting...", Font_11x18, White);
+  ssd1306_WriteString(startup_buf, Font_11x18, White);
   ssd1306_UpdateScreen(); // sends the buffer to the OLED
 
   HAL_Delay(1000);
+
+  for (int i = 0; i < 3; i++) {
+    strcat(startup_buf, ".");
+
+    ssd1306_Fill(Black);
+    ssd1306_SetCursor(10, 20);
+    ssd1306_WriteString(startup_buf, Font_11x18, White);
+    ssd1306_UpdateScreen();
+
+    HAL_Delay(1000);
+  }
   
   /* USER CODE END 2 */
 
@@ -144,6 +157,7 @@ int main(void)
 
     // read all 8 bytes in one go
     if (BME280_ReadRawData(&hi2c1, raw_data) == HAL_OK) {
+      // reconnect and reinitialize sensor
       if (sensor_was_offline == 1) {
             BME280_Init(&hi2c1, &bme280_handle); 
             sensor_was_offline = 0;
@@ -152,7 +166,7 @@ int main(void)
             
             HAL_Delay(100); 
             continue; // get new data
-        }
+      }
 
       // calculation, temp must be first
       // because only this function sets the t_fine in the Handle for the other calculations
@@ -160,12 +174,42 @@ int main(void)
       press = BME280_CalculatePressure(raw_data, &bme280_handle);
       hum   = BME280_CalculateHumidity(raw_data, &bme280_handle);
 
+      // ----- SEND DATA TO PC VIA UART ---------------------------------------------------
+
       // format print
       sprintf(uart_buf, "Temp: %.2f C | Pressure: %.2f hPa | Humidity: %.2f %%\r\n", 
               temp, press, hum);
 
-      // send to pc per uart
+      // send to pc
       HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+
+
+      // ----- SEND DATA TO OLED DISPLAY VIA I2C ------------------------------------------
+
+      // clear the screen
+      ssd1306_Fill(Black);
+
+      // format the temperature text
+      char display_buf[32];
+      sprintf(display_buf, "Temp: %.1f C", temp);
+
+      // set cursor (X=5 pixels right, Y=5 pixels down) and write */
+      ssd1306_SetCursor(5, 5);
+      ssd1306_WriteString(display_buf, Font_7x10, White);
+
+      // format and write pressure
+      sprintf(display_buf, "Pres: %.1f hPa", press);
+      ssd1306_SetCursor(5, 20);
+      ssd1306_WriteString(display_buf, Font_7x10, White);
+
+      // format and write humidity
+      sprintf(display_buf, "Hum:  %.1f %%", hum);
+      ssd1306_SetCursor(5, 35);
+      ssd1306_WriteString(display_buf, Font_7x10, White);
+
+      // push the drawing to the physical screen
+      ssd1306_UpdateScreen();
+
     } else { // runtime error
       sensor_was_offline = 1;
       sprintf(uart_buf, "WARNING: Lost connection to the BME280 sensor!\r\n");
