@@ -110,6 +110,8 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Initialize my BME280 driver
   HAL_StatusTypeDef sensor_status = BME280_Init(&hi2c1, &bme280_handle);
 
   if (sensor_status == HAL_OK) {
@@ -118,6 +120,17 @@ int main(void)
     sprintf(uart_buf, "Error: BME280 Sensor not found!\r\n");
   }
   HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, strlen(uart_buf), 100);
+
+  // Initialize the OLED display.
+  ssd1306_Init();
+
+  // Draw a startup screen
+  ssd1306_Fill(Black);
+  ssd1306_SetCursor(10, 20);
+  ssd1306_WriteString("Booting...", Font_11x18, White);
+  ssd1306_UpdateScreen(); // sends the buffer to the OLED
+
+  HAL_Delay(1000);
   
   /* USER CODE END 2 */
 
@@ -142,7 +155,7 @@ int main(void)
         }
 
       // calculation, temp must be first
-      // because only this function sets the t_fine for the other calculations
+      // because only this function sets the t_fine in the Handle for the other calculations
       temp  = BME280_CalculateTemperature(raw_data, &bme280_handle);
       press = BME280_CalculatePressure(raw_data, &bme280_handle);
       hum   = BME280_CalculateHumidity(raw_data, &bme280_handle);
