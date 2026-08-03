@@ -11,13 +11,9 @@ An embedded environmental monitoring system built on the STM32F4 platform. This 
 
 ## Project Showcase
 
-<p align="center">
-  <img src="docs/images/hardware_setup.jpg" alt="Breadboard setup: NUCLEO-F446RE with BME280 and OLED display showing live sensor readings" width="420">
-</p>
+![Breadboard setup: NUCLEO-F446RE with BME280 and OLED display showing live sensor readings](docs/images/hardware_setup.jpg)
 
-<p align="center">
-  <sub>Live readings on the OLED: temperature, barometric pressure and relative humidity.</sub>
-</p>
+<sub>Live readings on the OLED: temperature, barometric pressure and relative humidity.</sub>
 
 ---
 
