@@ -11,7 +11,9 @@ An embedded environmental monitoring system built on the STM32F4 platform. This 
 
 ## Project Showcase
 
-[![Hardware Setup](/killuari/sensorNode_STM32_F446RE/raw/main/docs/images/hardware_setup_placeholder.jpg)](/killuari/sensorNode_STM32_F446RE/blob/main/docs/images/hardware_setup_placeholder.jpg)
+![Breadboard setup: NUCLEO-F446RE with BME280 and OLED display showing live sensor readings](docs/images/hardware_setup.jpg)
+
+<sub>Live readings on the OLED: temperature, barometric pressure and relative humidity.</sub>
 
 ---
 
@@ -28,24 +30,39 @@ An embedded environmental monitoring system built on the STM32F4 platform. This 
 * **Microcontroller:** STM32 Nucleo-64 (STM32F446RE used in this build)
 * **Sensor:** BME280 (Temperature, Humidity, Pressure) via I2C
 * **Display:** 1.3" or 0.96" OLED Display (SSD1306 or SH1106 controller) via I2C
+* **Pull-ups:** 2 × 4.7 kΩ resistors (I2C bus pull-ups to 3V3)
 * **Misc:** Breadboard, Jumper Wires
 
 ### Wiring Diagram
 
-[![Fritzing Wiring Diagram](/killuari/sensorNode_STM32_F446RE/raw/main/docs/images/fritzing_diagram_placeholder.png)](/killuari/sensorNode_STM32_F446RE/blob/main/docs/images/fritzing_diagram_placeholder.png)
+![Wiring diagram](docs/images/wiring_diagram.png)
+
+<sub>Vector source: [`docs/images/wiring_diagram.svg`](docs/images/wiring_diagram.svg)</sub>
+
+Everything hangs on a single I2C bus: both modules are supplied with 3.3 V from the
+Nucleo and share `PB8` (SCL) and `PB9` (SDA). The bus is pulled up to 3V3 by two
+4.7 kΩ resistors on the breadboard.
 
 ### Pinout Configuration
 
-| Component | Pin Function | STM32 Pin | Note |
-| --- | --- | --- | --- |
-| **BME280** | VIN (VCC) | 3V3 | Requires 3.3V |
-| **BME280** | GND | GND |  |
-| **BME280** | SCL | PB8 (I2C1_SCL) | Check your specific CubeMX pinout |
-| **BME280** | SDA | PB9 (I2C1_SDA) | Check your specific CubeMX pinout |
-| **OLED** | VCC | 3V3 |  |
-| **OLED** | GND | GND |  |
-| **OLED** | SCL | PB8 (I2C1_SCL) | Shared I2C Bus |
-| **OLED** | SDA | PB9 (I2C1_SDA) | Shared I2C Bus |
+| Component | Pin Function | STM32 Pin | Nucleo Header | Note |
+| --- | --- | --- | --- | --- |
+| **BME280** | VCC | 3V3 | CN6-4 (`+3V3`) | Module runs at 3.3 V |
+| **BME280** | GND | GND | CN6-6 (`GND`) |  |
+| **BME280** | SCL | PB8 (I2C1_SCL) | CN10-3 / Arduino `D15` | Shared I2C bus |
+| **BME280** | SDA | PB9 (I2C1_SDA) | CN10-5 / Arduino `D14` | Shared I2C bus |
+| **BME280** | ADDR | — | — | Left at default → address `0x76` |
+| **OLED** | VDD | 3V3 | CN6-4 (`+3V3`) |  |
+| **OLED** | GND | GND | CN6-6 (`GND`) |  |
+| **OLED** | SCK (SCL) | PB8 (I2C1_SCL) | CN10-3 / Arduino `D15` | Shared I2C bus |
+| **OLED** | SDA | PB9 (I2C1_SDA) | CN10-5 / Arduino `D14` | Shared I2C bus |
+| **Pull-up 1** | SCL → 3V3 | — | — | 4.7 kΩ |
+| **Pull-up 2** | SDA → 3V3 | — | — | 4.7 kΩ |
+
+**I2C addresses:** BME280 `0x76` (7-bit), OLED `0x3C` (7-bit) — see
+`Core/Inc/bme280_driver.h` and `Drivers/stm32-ssd1306/Inc/ssd1306_conf.h`.
+PB8/PB9 are the same physical pins on the Morpho header (CN10) and on the
+Arduino header (`D15`/`D14`), so either one can be used.
 
 ---
 
